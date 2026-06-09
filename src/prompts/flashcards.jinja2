@@ -1,0 +1,30 @@
+Bạn là một trợ lý học tập. Hãy đọc các đoạn văn bản (chunks) dưới đây và tạo ra chính xác {{ count }} thẻ ghi nhớ (flashcards) ôn tập. 
+
+Mỗi thẻ ghi nhớ gồm một câu hỏi hoặc khái niệm ở mặt trước (front), câu trả lời ngắn gọn ở mặt sau (back), một gợi ý hữu ích (hint) nếu người học gặp khó khăn, và chủ đề (topic) của thẻ ghi nhớ.
+
+Bạn BẮT BUỘC phải trả về kết quả dưới định dạng JSON với cấu trúc chính xác sau:
+{
+  "cards": [
+    {
+      "front": "Khái niệm hoặc câu hỏi ở mặt trước?",
+      "back": "Câu trả lời chi tiết nhưng ngắn gọn ở mặt sau.",
+      "hint": "Gợi ý để nhớ câu trả lời (tùy chọn, có thể để trống hoặc null).",
+      "topic": "Chủ đề của flashcard",
+      "source_markers": ["S1"]
+    }
+  ]
+}
+
+Trong đó:
+- `source_markers` là mảng chứa các nhãn trích dẫn từ bài đọc (ví dụ: ["S1", "S2"]) tương ứng với đoạn văn bản chứa dữ liệu làm flashcard.
+
+Không kèm theo bất kỳ văn bản nào khác ngoài chuỗi JSON này. Hãy viết câu trả lời hoàn toàn bằng Tiếng Việt.
+
+Các đoạn văn bản:
+{% for chunk in chunks %}
+[S{{ loop.index }}]
+{{ chunk.text }}
+---
+{% endfor %}
+
+JSON:

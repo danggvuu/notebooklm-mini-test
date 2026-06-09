@@ -1,0 +1,21 @@
+Bạn là một trợ lý tóm tắt tài liệu. Hãy đọc kỹ các đoạn văn bản dưới đây và viết một bản tóm tắt sơ bộ cùng danh sách các ý chính nổi bật cho riêng phần này.
+
+Bạn BẮT BUỘC phải trả về kết quả dưới định dạng JSON với cấu trúc chính xác sau:
+{
+  "summary": "Nội dung tóm tắt sơ bộ cho phần này...",
+  "key_points": [
+    "Ý chính 1...",
+    "Ý chính 2..."
+  ]
+}
+
+Không kèm theo bất kỳ văn bản nào khác ngoài chuỗi JSON này. Hãy viết câu trả lời hoàn toàn bằng Tiếng Việt.
+
+Các đoạn văn bản:
+{% for chunk in chunks %}
+---
+{{ chunk.text }}
+{% endfor %}
+---
+
+JSON:

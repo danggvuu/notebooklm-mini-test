@@ -1,0 +1,98 @@
+flowchart TB
+    %% --- ĐỊNH DẠNG MÀU SẮC (STYLES) ---
+    classDef user fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef ui fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
+    classDef ops fill:#fff3e0,stroke:#0277bd,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef ingest fill:#f1f8e9,stroke:#33691e,stroke-width:2px;
+    classDef db fill:#ffcdd2,stroke:#e65100,stroke-width:2px;
+    classDef retrieve fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
+    classDef gen fill:#fff8e1,stroke:#f57f17,stroke-width:2px;
+
+    %% --- TẦNG NGƯỜI DÙNG & GIAO DIỆN ---
+    User(["Người dùng thực tế"]):::user
+    
+    subgraph UI_Layer ["Tầng Giao diện & Định tuyến API"]
+        Streamlit["Streamlit Web UI <br> Phân chia theo Workspace"]:::ui
+        FastAPI["FastAPI Backend <br> Hỗ trợ Server-Sent Events (SSE)"]:::ui
+    end
+
+    User -->|"Tạo Thẻ / Hỏi đáp"| Streamlit
+    Streamlit <-->|"REST API / SSE Stream"| FastAPI
+
+    %% --- TẦNG VẬN HÀNH & GIÁM SÁT (DAY-2 OPERATIONS) ---
+    subgraph Ops_Layer ["Tầng Tối ưu & Giám sát (MLOps)"]
+        Redis[("Redis Semantic Cache <br> Phản hồi 0.1s")]:::ops
+        Session[("Short-term Memory <br> Lịch sử hội thoại")]:::ops
+        Observability[["LangSmith / Prometheus <br> Tracing & Thumbs Up/Down"]]:::ops
+    end
+
+    FastAPI -->|"Check Cache"| Redis
+    FastAPI -->|"Lưu Session"| Session
+    FastAPI -.->|"Gửi Telemetry"| Observability
+
+    %% --- TẦNG NẠP DỮ LIỆU (ASYNC INGESTION) ---
+    subgraph Ingestion_Layer ["Tầng Xử lý Dữ liệu Bất đồng bộ"]
+        Worker["Background Worker <br> Celery / FastAPI Tasks"]:::ingest
+        MarkItDown["MarkItDown Parser <br> Xử lý Đa phương thức & OCR -> Markdown"]:::ingest
+        Chunker["Recursive Chunker <br> 1000 size / 150 overlap"]:::ingest
+        Embedder["GreenNode Embedding <br> VN-Mixed-V1"]:::ingest
+    end
+
+    FastAPI -->|"Upload File <br> (Trả về ngay)"| Worker
+    Worker --> MarkItDown --> Chunker
+    Chunker --> Embedder
+    Chunker -->|"Từ khóa thô"| BM25
+
+    %% --- TẦNG KHO TRI THỨC (HYBRID DATABASE) ---
+    subgraph DB_Layer ["Kho Tri thức Cô lập (Data Isolation)"]
+        Qdrant[("Qdrant Vector DB <br> Payload Index")]:::db
+        BM25[("RankBM25 <br> Inverted Index trên RAM")]:::db
+    end
+
+    Embedder -->|"Vector + Metadata"| Qdrant
+
+    %% --- TẦNG TRUY XUẤT (RETRIEVAL & RERANKING) ---
+    subgraph Retrieval_Layer ["Tầng Truy xuất Lai & Lọc nhiễu"]
+        Router{"Scope Resolution <br> Phân tích Query"}:::retrieve
+        HybridSearch["Hybrid Search <br> Chạy song song 2 luồng"]:::retrieve
+        CrossEncoder["Cross-Encoder Reranker <br> BAAI/bge-reranker-v2-m3"]:::retrieve
+        Qdrant_Scroll["Scroll All Chunks <br> Không dùng thuật toán tìm kiếm"]:::retrieve
+        Context_Builder["Đóng gói Ngữ cảnh"]:::retrieve
+    end
+
+    Redis -->|"Cache Miss"| Router
+    Router -->|"Nếu có Query"| HybridSearch
+    Router -->|"Xử lý Toàn file/Thẻ"| Qdrant_Scroll
+    
+    HybridSearch -->|"Quét Semantic"| Qdrant
+    HybridSearch -->|"Quét Keyword"| BM25
+    Qdrant -->|"Top K"| HybridSearch
+    BM25 -->|"Top K"| HybridSearch
+
+    HybridSearch -->|"15 Chunks thô"| CrossEncoder
+    CrossEncoder -->|"Lọc sạch giữ lại 5 Chunks"| Context_Builder
+    Qdrant_Scroll --> Context_Builder
+
+    %% --- TẦNG TẠO SINH & HỌC TẬP (GENERATION & LEARNING) ---
+    subgraph Generation_Layer ["Tầng Tạo sinh & Kiểm duyệt"]
+        Jinja["Prompt Engineering <br> Jinja2 Templates"]:::gen
+        MapReduce["Data Batching (Map-Reduce) <br> Nhóm dữ liệu tóm tắt văn bản dài"]:::gen
+        LLM_Factory{"LLM Factory Pattern"}:::gen
+        vLLM["vLLM Server (Production)"]:::gen
+        LocalHF["HuggingFace (Dev)"]:::gen
+        Gemini["Gemini API (Baseline)"]:::gen
+        Stream_Batching["Stream Batching (Token Buffer) <br> Gom lô Token đầu ra (vd: 50ms)"]:::gen
+        Pydantic["Pydantic Validation <br> Ép kiểu JSON bắt lỗi thiếu đáp án"]:::gen
+    end
+
+    Context_Builder --> Jinja
+    Qdrant_Scroll -->|"Gom Lô Dữ liệu"| MapReduce --> Jinja
+    Jinja --> LLM_Factory
+    LLM_Factory --> vLLM & LocalHF & Gemini
+    
+    %% Luồng rẽ nhánh ở đầu ra
+    vLLM & LocalHF & Gemini -->|"Trả lời Hỏi đáp (Streaming)"| Stream_Batching
+    vLLM & LocalHF & Gemini -->|"Sinh Quiz/Flashcard (Khối)"| Pydantic
+
+    Stream_Batching -->|"Yield qua SSE"| FastAPI
+    Pydantic -->|"Trả JSON nguyên khối"| FastAPI

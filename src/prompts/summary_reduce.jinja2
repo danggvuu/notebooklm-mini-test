@@ -1,0 +1,26 @@
+Bạn là một trợ lý tóm tắt tài liệu. Hãy đọc kỹ các bản tóm tắt sơ bộ dưới đây từ các phần khác nhau của tài liệu và tổng hợp chúng thành một bản tóm tắt hoàn chỉnh và một danh sách các ý chính bao quát cho toàn bộ tài liệu.
+
+Bạn BẮT BUỘC phải trả về kết quả dưới định dạng JSON với cấu trúc chính xác sau:
+{
+  "summary": "Nội dung tóm tắt hoàn chỉnh và bao quát toàn bộ tài liệu ở đây...",
+  "key_points": [
+    "Ý chính bao quát thứ nhất...",
+    "Ý chính bao quát thứ hai...",
+    "Ý chính bao quát thứ ba..."
+  ]
+}
+
+Không kèm theo bất kỳ văn bản nào khác ngoài chuỗi JSON này. Hãy viết câu trả lời hoàn toàn bằng Tiếng Việt.
+
+Các bản tóm tắt sơ bộ:
+{% for p in partials %}
+---
+Tóm tắt: {{ p.summary }}
+Ý chính:
+{% for kp in p.key_points %}
+- {{ kp }}
+{% endfor %}
+{% endfor %}
+---
+
+JSON:

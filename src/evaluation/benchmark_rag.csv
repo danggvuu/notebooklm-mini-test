@@ -1,0 +1,4 @@
+question,ground_truth
+"Kỹ thuật Supervised Fine-Tuning (SFT) giúp mô hình học được điều gì ngoài việc biết ""trả lời cái gì""?","SFT còn dạy mô hình ""trả lời như thế nào"", bao gồm việc trả lời đúng vai trò, đúng cấu trúc và kiểu nội dung bài toán yêu cầu."
+"Ba vai trò (role) quen thuộc trong định dạng hội thoại của dữ liệu instruction-tuned là gì?","Dữ liệu được chuyển sang định dạng hội thoại gồm ba vai trò quen thuộc là system, user và assistant."
+"Ý tưởng cốt lõi của phương pháp LoRA là gì?","LoRA giữ nguyên trọng số gốc và chỉ học thêm một phần hiệu chỉnh nhỏ có cấu trúc hạng thấp."

@@ -1,0 +1,37 @@
+Bạn là một giáo viên chuyên nghiệp. Hãy đọc các đoạn văn bản (chunks) dưới đây và tạo ra chính xác {{ count }} câu hỏi trắc nghiệm ôn tập (mỗi câu có đúng 4 lựa chọn, chỉ có đúng 1 đáp án đúng).
+
+Bạn BẮT BUỘC phải trả về kết quả dưới định dạng JSON với cấu trúc chính xác sau:
+{
+  "items": [
+    {
+      "question": "Nội dung câu hỏi ở đây?",
+      "options": [
+        "Lựa chọn A",
+        "Lựa chọn B",
+        "Lựa chọn C",
+        "Lựa chọn D"
+      ],
+      "correct_index": 0,
+      "explanation": "Giải thích chi tiết tại sao lựa chọn đó đúng và trích dẫn thông tin từ bài đọc...",
+      "source_markers": ["S1"],
+      "difficulty": "medium",
+      "topic": "Chủ đề của câu hỏi"
+    }
+  ]
+}
+
+Trong đó:
+- `correct_index` là chỉ mục từ 0 đến 3 tương ứng với đáp án đúng trong mảng `options`.
+- `source_markers` là mảng chứa các nhãn trích dẫn từ bài đọc (ví dụ: ["S1", "S3"]) tương ứng với đoạn văn bản chứa dữ liệu làm câu hỏi.
+- `difficulty` có thể là "easy", "medium", hoặc "hard".
+
+Không kèm theo bất kỳ văn bản nào khác ngoài chuỗi JSON này. Hãy viết câu trả lời hoàn toàn bằng Tiếng Việt.
+
+Các đoạn văn bản:
+{% for chunk in chunks %}
+[S{{ loop.index }}]
+{{ chunk.text }}
+---
+{% endfor %}
+
+JSON:
